@@ -34,7 +34,7 @@ const getAllComments = async (req, res) => {
     const { id } = req.params
     try {
         const foundMovie =  await Movie.findOne({ id })
-        if(!foundMovie) throw { message: "User not found" }
+        if(!foundMovie) throw { message: "Movie not found" }
         const foundComments = await Comment.find({ movie: foundMovie._id  })
         res.status(200).json({ payload: foundComments })
     }
@@ -45,18 +45,62 @@ const getAllComments = async (req, res) => {
 }
 
 //  Update comment
-// const updteComment = async (req, res) => {
-//     try {
+const updteComment = async (req, res) => {
+    const { commentId, email } = req.body
+    try {
+        const foundUser =  await User.findOne({ email })
+        if(!foundUser) throw { message: "User not found" }
+        const foundComment = await Comment.findById(commentId)
+        if(!foundComment) throw { message: "Comment not found" }
 
-//     }
-//     catch (err) {
-//         console.log(err)
-//         res.status(500).json({ message: "error", error: err })
-//     }
-// }
+        if(foundUser._id.toString() === foundComment.commentOwner.toString()) {
+            const updatedComment = await Comment.findByIdAndUpdate(commentId, req.body, { new: true })
+            res.status(200).json({ message: "Comment has been updated", payload: updatedComment })
+        }
+        else {
+            throw { message: "You do not have permission!" }
+        }
+    }
+    catch (err) {
+        console.log(err)
+        res.status(500).json({ message: "error", error: err })
+    }
+}
+
+//  Delete comment
+const deleteComment = async (req, res) => {
+    const { id } = req.params
+    const { email } = req.body
+    try {
+        const foundComment = await Comment.findById(id)
+        if(!foundComment) throw { message: "Comment not found" }
+        // const deleteComment = await Comment.findByIdAndDelete(id)
+        // if(!deleteComment) throw { message: "No comment with id found!"}
+        const foundUser = await User.findById({ email })
+        if(!foundUser) throw { message: "User not found" }
+        const foundMovie = await Movie.findById(deleteComment.movie)
+        if(!foundMovie) throw { message: "Movie not found" }
+
+        if(foundUser._id.toString() === foundComment.commentOwner.toString()) {
+            foundUser.commentHistory.pull(id)
+            foundMovie.commentHistory.pull(id)
+            await foundUser.save()
+            await foundMovie.save()
+            res.status(200).json({ message: "Comment has been deleted", payload: deleteComment })
+        }
+        else {
+            throw { message: "You do not have permission!" }
+        }
+    }
+    catch (err) {
+        console.log(err)
+        res.status(500).json({ message: "error", error: err })
+    }
+}
 
 module.exports = {
     createComment,
     getAllComments,
-    // updteComment,
+    updteComment,
+    deleteComment
 }
