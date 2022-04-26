@@ -1,9 +1,8 @@
 var express = require('express')
 var router = express.Router()
+const { createComment, getAllComments } = require('./controller/commentController')
 
-/* GET comments listing. */
-router.get('/', function(req, res, next) {
-    res.send('Hello World from Comment Router!')
-})
+router.post('/create-comment/:id', createComment)
+router.get('/get-all-comments/:id', getAllComments)
 
 module.exports = router

@@ -1,9 +1,10 @@
 var express = require('express')
 var router = express.Router()
+const { createMovie, getAllUsersMovies, getOneMovie, updateMovie } = require('./controller/movieController')
 
-/* GET movies listing. */
-router.get('/', function(req, res, next) {
-    res.send('Hello World from Movie Router!')
-})
+router.post('/create-movie', createMovie)
+router.get('/get-all-user-movies', getAllUsersMovies)
+router.get('/get-one-movie/:id', getOneMovie)
+router.put('/update-movie', updateMovie)
 
 module.exports = router

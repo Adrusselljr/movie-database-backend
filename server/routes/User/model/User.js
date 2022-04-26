@@ -22,7 +22,17 @@ const UserSchema = new mongoose.Schema({
 
     password: {
         type: String
-    }
+    },
+
+    movieHistory: [{
+        type: mongoose.Schema.ObjectId,
+        ref: "movie"
+    }],
+
+    commentHistory: [{
+        type: mongoose.Schema.ObjectId,
+        ref: "comment"
+    }]
 
 }, { timestamps: true })
 

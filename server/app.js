@@ -11,6 +11,7 @@ mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => console.log('Established a connection to the database'))
   .catch(err => console.log('Something went wrong when connecting to the database ', err))
+  console.log(process.env.MONGODB_URI)
 
 var indexRouter = require('./routes/index');
 const usersRouter = require('./routes/User/usersRouter')
@@ -24,7 +25,10 @@ var app = express();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
-app.use(cors())
+app.use(cors({
+  origin: "http://localhost:3000", 
+  credentials: true,
+}))
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
