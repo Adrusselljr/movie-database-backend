@@ -1,6 +1,5 @@
 const Movie = require('../model/Movie')
 const User = require('../../User/model/User')
-
 //  Create movie
 const createMovie = async (req, res) => {
     const { locationId, title, description, genre, rating, director, stars, runtime, yearReleased, email } = req.body
@@ -82,35 +81,46 @@ const updateMovie = async (req, res) => {
 }
 
 //  Delete movie
-// const deleteMovie = async (req, res) => {
-//     const { movieId } = req.params
-//     const { email } = req.body
-//     try {
-//         const foundUser =  await User.findOne({ email })
-//         if(!foundUser) throw { message: "User not found" }
-//         const foundMovie = await Movie.findById(movieId)
-//         if(!foundMovie) throw { message: "Movie not found" }
+const deleteMovie = async (req, res) => {
+    const { id } = req.params
+    const { email } = req.body
+    try {
+        const foundUser =  await User.findOne({ email })
+        if(!foundUser) throw { message: "User not found" }
+        const foundMovie = await Movie.findById(id)
+        if(!foundMovie) throw { message: "Movie not found" }
 
-//         if(foundUser._id.toString() === foundMovie.movieOwner.toString()) {
-//             const updatedMovie = await Movie.findByIdAndUpdate(movieId, req.body, { new: true })
-//             res.status(200).json({ message: "Movie has been updated", payload: updatedMovie })
-
-            
-//         }
-//         else {
-//             throw { message: "You do not have permission!" }
-//         }
-//     }
-//     catch (err) {
-//         console.log(err)
-//         res.status(500).json({ message: "error", error: err })
-//     }
-// }
+        if(foundUser._id.toString() === foundMovie.movieOwner.toString()) {
+            const deleteMovie = await Movie.findByIdAndDelete(id)
+            if(!deleteMovie) throw { mesaage: "No movie with id found!" }
+            if(foundMovie.commentHistory.length > 0) {
+                const foundComments = await Comment.find({ movie: id })
+                if(!foundComments) throw { mesaage: "No movie with id found!" }
+                await foundComments.map(async comment => {
+                    let commentUser = await User.findById(comment.commentOwner)
+                    await commentUser.commentHistory.pill(comment._id.toString())
+                    await commentUser.save()
+                })
+                await Comment.deleteMany({ movie: id })
+            }
+            await foundUser.movieHistory.pull(id)
+            await foundUser.save()
+            res.status(200).json({ message: "Movie was deleted", deletedMovie: deleteMovie, deletedInUser: foundUser })
+        }
+        else {
+            throw { message: "You do not have permission!" }
+        }
+    }
+    catch (err) {
+        console.log(err)
+        res.status(500).json({ message: "error", error: err })
+    }
+}
 
 module.exports = {
     createMovie,
     getAllUsersMovies,
     getOneMovie,
     updateMovie,
-    // deleteMovie
+    deleteMovie
 }

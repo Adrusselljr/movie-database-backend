@@ -74,9 +74,9 @@ const deleteComment = async (req, res) => {
     try {
         const foundComment = await Comment.findById(id)
         if(!foundComment) throw { message: "Comment not found" }
-        // const deleteComment = await Comment.findByIdAndDelete(id)
-        // if(!deleteComment) throw { message: "No comment with id found!"}
-        const foundUser = await User.findById({ email })
+        const deleteComment = await Comment.findByIdAndDelete(id)
+        if(!deleteComment) throw { message: "No comment with id found!"}
+        const foundUser = await User.findOne({ email })
         if(!foundUser) throw { message: "User not found" }
         const foundMovie = await Movie.findById(deleteComment.movie)
         if(!foundMovie) throw { message: "Movie not found" }
