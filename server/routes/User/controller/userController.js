@@ -39,9 +39,9 @@ const getAllUsers = async (req, res) => {
 
 //  Get current user
 const getCurrentUser = async (req, res) => {
-    const { email } = req.body
+    const { id } = req.params
     try {
-        const foundUser = await User.findOne({ email: email }) // .populate("movieHistory", "commentHistory", "-movieOwner -__v", "-commentOwner -__v")
+        const foundUser = await User.findOne({ id }).populate("movieHistory")
         res.status(200).json({ message: "Current user, movie history and comment history", payload: foundUser })
     }
     catch (err) {
@@ -52,13 +52,13 @@ const getCurrentUser = async (req, res) => {
 
 //  Update user
 const updateUser = async (req, res) => {
-    const { email } = req.body
+    const { id } = req.params
     try {
         const salt = await bcrypt.genSalt(10)
         const hashPassword = await bcrypt.hash(req.body.password, salt)
         req.body.password = hashPassword
 
-        const updatedUser = await User.findOneAndUpdate({ email: email }, req.body, { new: true })
+        const updatedUser = await User.findOneAndUpdate({ id }, req.body, { new: true })
         if(updateUser === null) throw new Error("No user with id found")
         res.status(200).json({ message: "Updated user", payload: updatedUser })
     }

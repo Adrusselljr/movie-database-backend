@@ -5,8 +5,8 @@ const { checkIsEmpty, validateCreate, validateUpdate, validateLogin } = require(
 
 router.post('/create-user', validateCreate, checkIsEmpty, createUser)
 router.get('/get-all-users', getAllUsers)
-router.get('/get-current-user', getCurrentUser)
-router.put('/update-user', checkIsEmpty, validateUpdate, updateUser)
+router.get('/get-current-user/:id', getCurrentUser)
+router.put('/update-user/:id', checkIsEmpty, validateUpdate, updateUser)
 router.delete('/delete-user/:id', deleteUser)
 router.post('/login', checkIsEmpty, validateLogin, userLogin)
 
