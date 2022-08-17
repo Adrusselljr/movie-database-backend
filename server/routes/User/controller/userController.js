@@ -41,7 +41,8 @@ const getAllUsers = async (req, res) => {
 const getCurrentUser = async (req, res) => {
     const { id } = req.params
     try {
-        const foundUser = await User.findOne({ id }).populate("movieHistory")
+        const foundUser = await User.findById( id ).populate("movieHistory")
+        if(!foundUser) throw { message: "No user with if found!" }
         res.status(200).json({ message: "Current user, movie history and comment history", payload: foundUser })
     }
     catch (err) {
@@ -53,13 +54,14 @@ const getCurrentUser = async (req, res) => {
 //  Update user
 const updateUser = async (req, res) => {
     const { id } = req.params
+
     try {
         const salt = await bcrypt.genSalt(10)
         const hashPassword = await bcrypt.hash(req.body.password, salt)
         req.body.password = hashPassword
 
         const updatedUser = await User.findOneAndUpdate({ id }, req.body, { new: true })
-        if(updateUser === null) throw new Error("No user with id found")
+        if(!updatedUser) throw new Error("No user with id found")
         res.status(200).json({ message: "Updated user", payload: updatedUser })
     }
     catch (err) {
@@ -71,9 +73,10 @@ const updateUser = async (req, res) => {
 //  Delete user
 const deleteUser = async (req, res) => {
     const { id } = req.params
+
     try {
-        let deleteUser = await User.findByIdAndDelete(id)
-        if(deleteUser === null) throw new Error("No user with id found!")
+        let deletedUser = await User.findByIdAndDelete(id)
+        if(!deletedUser) throw { message: "No user with id found!" }
         res.status(200).json({ message: "User has been deleted", payload: deleteUser })
     }
     catch (err) {
@@ -85,13 +88,12 @@ const deleteUser = async (req, res) => {
 //  User login
 const userLogin = async (req, res) => {
     const { email, password } = req.body
+
     try {
         const foundUser = await User.findOne({ email: email })
-        if(foundUser === null) throw { message: "Email not found!" }
-
+        if(!foundUser) throw { message: "Email not found!" }
         const comparedPassword = await bcrypt.compare(password, foundUser.password)
         if(!comparedPassword) throw { message: "Password does not match!" }
-
         res.status(200).json({ payload: foundUser })
     }
     catch (error) {

@@ -21,7 +21,9 @@ const createComment = async (req, res) => {
         foundMovie.commentHistory.push(savedComment._id)
         await foundUser.save()
         await foundMovie.save()
-        res.status(200).json({ message: "Saved new comment", payload: savedComment })
+        const foundMovieInfo = await foundMovie.populate({path: "commentHistory", populate: {path: "commentOwner"}})
+        console.log("foundMovieInfo ", foundMovieInfo)
+        res.status(200).json({ message: "Saved new comment", payload: foundMovieInfo })
     }
     catch (err) {
         console.log(err)
@@ -32,10 +34,11 @@ const createComment = async (req, res) => {
 // Get all comments
 const getAllComments = async (req, res) => {
     const { id } = req.params
+
     try {
         const foundMovie =  await Movie.findOne({ id })
         if(!foundMovie) throw { message: "Movie not found" }
-        const foundComments = await Comment.find({ movie: foundMovie._id  })
+        const foundComments = await Comment.find({ movie: foundMovie._id  }).populate('commentOwner')
         res.status(200).json({ payload: foundComments })
     }
     catch (err) {
@@ -47,6 +50,7 @@ const getAllComments = async (req, res) => {
 //  Update comment
 const updteComment = async (req, res) => {
     const { commentId, email } = req.body
+
     try {
         const foundUser =  await User.findOne({ email })
         if(!foundUser) throw { message: "User not found" }
@@ -71,6 +75,7 @@ const updteComment = async (req, res) => {
 const deleteComment = async (req, res) => {
     const { id } = req.params
     const { email } = req.body
+    
     try {
         const foundComment = await Comment.findById(id)
         if(!foundComment) throw { message: "Comment not found" }

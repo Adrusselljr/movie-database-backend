@@ -1,11 +1,14 @@
 const Movie = require('../model/Movie')
 const User = require('../../User/model/User')
+const Comment = require('../../Comment/model/Comment')
 //  Create movie
 const createMovie = async (req, res) => {
-    const { locationId, title, description, genre, rating, director, stars, runtime, yearReleased, email } = req.body
-    const foundUser =  await User.findOne(email)
-        if(!foundUser) throw { message: "User not found" }
+    const { locationId, title, description, genre, rating, director, stars, runtime, yearReleased } = req.body
+    const { id } = req.params
     try {
+        const foundUser =  await User.findById( id )
+        if(!foundUser) throw { message: "User not found" }
+
         const newMovie = new Movie({
             locationId: locationId,
             title: title,
@@ -31,9 +34,9 @@ const createMovie = async (req, res) => {
 
 //  Get all movies from user
 const getAllUsersMovies = async (req, res) => {
-    const { email } = req.body
+    const { id } = req.params
     try {
-        const foundUser = await User.findOne({ email })
+        const foundUser = await User.findOneById( id )
         if(!foundUser) throw { message: "User not found!" }
         const foundMovies = await Movie.find({ movieOwner: foundUser._id })
         res.status(200).json({ payload: foundMovies })
@@ -48,7 +51,8 @@ const getAllUsersMovies = async (req, res) => {
 const getOneMovie = async (req, res) => {
     const { id } = req.params
     try {
-        let oneMovie = await Movie.findById(id)
+        let oneMovie = await Movie.findById(id).populate({path: "commentHistory", populate: {path: "commentOwner"}})
+        if(!oneMovie) throw { message: "No movie with id found!" }
         res.status(200).json({ payload: oneMovie })
     }
     catch (err) {
@@ -59,15 +63,16 @@ const getOneMovie = async (req, res) => {
 
 // Update movie
 const updateMovie = async (req, res) => {
-    const { movieId, email } = req.body
+    const { userId } = req.body
+    const { id } = req.params
     try {
-        const foundUser =  await User.findOne({ email })
+        const foundUser =  await User.findOne({ userId })
         if(!foundUser) throw { message: "User not found" }
-        const foundMovie = await Movie.findById(movieId)
+        const foundMovie = await Movie.findById(id)
         if(!foundMovie) throw { message: "Movie not found" }
 
         if(foundUser._id.toString() === foundMovie.movieOwner.toString()) {
-            const updatedMovie = await Movie.findByIdAndUpdate(movieId, req.body, { new: true })
+            const updatedMovie = await Movie.findByIdAndUpdate({ id }, req.body, { new: true })
             res.status(200).json({ message: "Movie has been updated", payload: updatedMovie })
         }
         else {
@@ -98,7 +103,7 @@ const deleteMovie = async (req, res) => {
                 if(!foundComments) throw { mesaage: "No movie with id found!" }
                 await foundComments.map(async comment => {
                     let commentUser = await User.findById(comment.commentOwner)
-                    await commentUser.commentHistory.pill(comment._id.toString())
+                    await commentUser.commentHistory.pull(comment._id.toString())
                     await commentUser.save()
                 })
                 await Comment.deleteMany({ movie: id })
