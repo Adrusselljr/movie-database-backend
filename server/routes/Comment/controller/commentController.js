@@ -4,10 +4,12 @@ const User = require('../../User/model/User')
 
 //  Create comment
 const createComment = async (req, res) => {
-    const { comment, email } = req.body
+    const decodedToken = res.locals.decodedToken
+    const { comment } = req.body
     const { id } = req.params
+
     try {
-        const foundUser =  await User.findOne({ email })
+        const foundUser = await User.findOne({ _id: decodedToken._id })
         if(!foundUser) throw { message: "User not found" }
         const foundMovie = await Movie.findById(id)
         if(!foundMovie) throw { message: "Movie not found" }
@@ -27,7 +29,7 @@ const createComment = async (req, res) => {
     }
     catch (err) {
         console.log(err)
-        res.status(500).json({ message: "error", error: err })
+        res.status(500).json({ message: "error", error: err.message })
     }
 }
 
@@ -43,22 +45,23 @@ const getAllComments = async (req, res) => {
     }
     catch (err) {
         console.log(err)
-        res.status(500).json({ message: "error", error: err })
+        res.status(500).json({ message: "error", error: err.message })
     }
 }
 
 //  Update comment
-const updteComment = async (req, res) => {
-    const { commentId, email } = req.body
+const updateComment = async (req, res) => {
+    const decodedToken = res.locals.decodedToken
+    const { id } = req.params
 
     try {
-        const foundUser =  await User.findOne({ email })
+        const foundUser = await User.findOne({ _id: decodedToken._id })
         if(!foundUser) throw { message: "User not found" }
-        const foundComment = await Comment.findById(commentId)
+        const foundComment = await Comment.findById(id).populate("commentOwner")
         if(!foundComment) throw { message: "Comment not found" }
 
         if(foundUser._id.toString() === foundComment.commentOwner.toString()) {
-            const updatedComment = await Comment.findByIdAndUpdate(commentId, req.body, { new: true })
+            const updatedComment = await Comment.findByIdAndUpdate(id, req.body, { new: true })
             res.status(200).json({ message: "Comment has been updated", payload: updatedComment })
         }
         else {
@@ -67,23 +70,23 @@ const updteComment = async (req, res) => {
     }
     catch (err) {
         console.log(err)
-        res.status(500).json({ message: "error", error: err })
+        res.status(500).json({ message: "error", error: err.message })
     }
 }
 
 //  Delete comment
 const deleteComment = async (req, res) => {
+    const decodedToken = res.locals.decodedToken
     const { id } = req.params
-    const { email } = req.body
     
     try {
         const foundComment = await Comment.findById(id)
         if(!foundComment) throw { message: "Comment not found" }
-        const deleteComment = await Comment.findByIdAndDelete(id)
-        if(!deleteComment) throw { message: "No comment with id found!"}
-        const foundUser = await User.findOne({ email })
+        const deletedComment = await Comment.findByIdAndDelete(id)
+        if(!deletedComment) throw { message: "No comment with id found!"}
+        const foundUser = await User.findOne({ _id: decodedToken._id })
         if(!foundUser) throw { message: "User not found" }
-        const foundMovie = await Movie.findById(deleteComment.movie)
+        const foundMovie = await Movie.findById(deletedComment.movie)
         if(!foundMovie) throw { message: "Movie not found" }
 
         if(foundUser._id.toString() === foundComment.commentOwner.toString()) {
@@ -91,7 +94,7 @@ const deleteComment = async (req, res) => {
             foundMovie.commentHistory.pull(id)
             await foundUser.save()
             await foundMovie.save()
-            res.status(200).json({ message: "Comment has been deleted", payload: deleteComment })
+            res.status(200).json({ message: "Comment has been deleted", payload: deletedComment })
         }
         else {
             throw { message: "You do not have permission!" }
@@ -99,13 +102,13 @@ const deleteComment = async (req, res) => {
     }
     catch (err) {
         console.log(err)
-        res.status(500).json({ message: "error", error: err })
+        res.status(500).json({ message: "error", error: err.message })
     }
 }
 
 module.exports = {
     createComment,
     getAllComments,
-    updteComment,
+    updateComment,
     deleteComment
 }

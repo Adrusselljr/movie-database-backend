@@ -1,10 +1,12 @@
 const User = require('../model/User')
 const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
 const { errorHandler } = require('../lib/errorHandler')
 
 //  Create user
 const createUser = async (req, res) => {
-    const { firstName, lastName, username, email, password } = req.body
+    const { firstName, lastName, email, password } = req.body
+
     try {
         let salt = await bcrypt.genSalt(10)
         let hashPassword = await bcrypt.hash(password, salt)
@@ -12,7 +14,6 @@ const createUser = async (req, res) => {
         const newUser = new User({
             firstName: firstName,
             lastName: lastName,
-            username: username,
             email: email,
             password: hashPassword
         })
@@ -21,7 +22,7 @@ const createUser = async (req, res) => {
     }
     catch (err) {
         console.log(err)
-        res.status(500).json({ error: errorHandler(error) })
+        res.status(500).json({ error: errorHandler(err) })
     }
 }
 
@@ -39,10 +40,11 @@ const getAllUsers = async (req, res) => {
 
 //  Get current user
 const getCurrentUser = async (req, res) => {
-    const { id } = req.params
+    const decodedToken = res.locals.decodedToken
+
     try {
-        const foundUser = await User.findById( id ).populate("movieHistory")
-        if(!foundUser) throw { message: "No user with if found!" }
+        const foundUser = await User.findOne({ _id: decodedToken._id }).populate("movieHistory")
+        if(!foundUser) throw { message: "No user with id found!" }
         res.status(200).json({ message: "Current user, movie history and comment history", payload: foundUser })
     }
     catch (err) {
@@ -53,20 +55,36 @@ const getCurrentUser = async (req, res) => {
 
 //  Update user
 const updateUser = async (req, res) => {
-    const { id } = req.params
+    const decodedToken = res.locals.decodedToken
 
     try {
-        const salt = await bcrypt.genSalt(10)
-        const hashPassword = await bcrypt.hash(req.body.password, salt)
-        req.body.password = hashPassword
-
-        const updatedUser = await User.findOneAndUpdate({ id }, req.body, { new: true })
+        const updatedUser = await User.findOneAndUpdate({ _id: decodedToken._id }, req.body, { new: true })
         if(!updatedUser) throw new Error("No user with id found")
         res.status(200).json({ message: "Updated user", payload: updatedUser })
     }
     catch (err) {
         console.log(err)
-        res.status(500).json({ error: errorHandler(error) })
+        res.status(500).json({ error: errorHandler(err) })
+    }
+}
+
+// Update user password
+const updatePassword = async (req, res) => {
+    const decodedToken = res.locals.decodedToken
+    let { password } = req.body
+
+    try {
+        const salt = await bcrypt.genSalt(10)
+        const hashPassword = await bcrypt.hash(password, salt)
+        password = hashPassword
+
+        const updateUser = await User.findOneAndUpdate({ _id: decodedToken._id }, req.body, { new: true })
+        if(updateUser === null) throw new Error("No user with id found!")
+        res.status(200).json({ message: "Updated user", payload: updateUser })
+    }
+    catch (err) {
+        console.log(err)
+        res.status(500).json({ error: errorHandler(err) })
     }
 }
 
@@ -90,14 +108,24 @@ const userLogin = async (req, res) => {
     const { email, password } = req.body
 
     try {
-        const foundUser = await User.findOne({ email: email })
+        const foundUser = await User.findOne({ email: email})
         if(!foundUser) throw { message: "Email not found!" }
         const comparedPassword = await bcrypt.compare(password, foundUser.password)
-        if(!comparedPassword) throw { message: "Password does not match!" }
-        res.status(200).json({ payload: foundUser })
+        if(!comparedPassword) throw { mesaage: "Password does not match!" }
+
+        const jwtToken = jwt.sign({
+            _id: foundUser._id,
+            iat: Date.now()
+        },
+            process.env.SECRET_KEY,
+            { expiresIn: "12h" }
+        )
+
+        res.status(200).json({ message: "User is logged in",  payload: foundUser, token: jwtToken })
     }
-    catch (error) {
-        res.status(500).json({ error: error.message })
+    catch (err) {
+        console.log(err)
+        res.status(500).json({ error: err.message })
     }
 }
 
@@ -107,5 +135,6 @@ module.exports = {
     getCurrentUser,
     updateUser,
     deleteUser,
-    userLogin
+    userLogin,
+    updatePassword
 }

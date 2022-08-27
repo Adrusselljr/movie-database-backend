@@ -1,12 +1,13 @@
 var express = require('express')
 var router = express.Router()
-const { createUser, getAllUsers, getCurrentUser, updateUser, deleteUser, userLogin } = require('./controller/userController')
-const { checkIsEmpty, validateCreate, validateUpdate, validateLogin } = require('./lib/index')
+const { createUser, getAllUsers, getCurrentUser, updateUser, deleteUser, userLogin, updatePassword } = require('./controller/userController')
+const { checkIsEmpty, validateCreate, validateUpdate, validateLogin, jwtMiddleware, validateUpdatePassword } = require('../lib/index')
 
 router.post('/create-user', validateCreate, checkIsEmpty, createUser)
-router.get('/get-all-users', getAllUsers)
-router.get('/get-current-user/:id', getCurrentUser)
-router.put('/update-user/:id', checkIsEmpty, validateUpdate, updateUser)
+router.get('/all-users', getAllUsers)
+router.get('/current-user', jwtMiddleware, getCurrentUser)
+router.put('/update-user/', checkIsEmpty, validateUpdate, jwtMiddleware, updateUser)
+router.put('/update-password', checkIsEmpty, validateUpdatePassword, jwtMiddleware, updatePassword)
 router.delete('/delete-user/:id', deleteUser)
 router.post('/login', checkIsEmpty, validateLogin, userLogin)
 

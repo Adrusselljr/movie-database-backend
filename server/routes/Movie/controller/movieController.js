@@ -1,12 +1,14 @@
 const Movie = require('../model/Movie')
 const User = require('../../User/model/User')
 const Comment = require('../../Comment/model/Comment')
+
 //  Create movie
 const createMovie = async (req, res) => {
+    const decodedToken = res.locals.decodedToken
     const { locationId, title, description, genre, rating, director, stars, runtime, yearReleased } = req.body
-    const { id } = req.params
+
     try {
-        const foundUser =  await User.findById( id )
+        const foundUser = await User.findOne({ _id: decodedToken._id })
         if(!foundUser) throw { message: "User not found" }
 
         const newMovie = new Movie({
@@ -28,28 +30,30 @@ const createMovie = async (req, res) => {
     }
     catch (err) {
         console.log(err)
-        res.status(500).json({ message: "error", error: err })
+        res.status(500).json({ message: "error", error: err.message })
     }
 }
 
 //  Get all movies from user
 const getAllUsersMovies = async (req, res) => {
-    const { id } = req.params
+    const decodedToken = res.locals.decodedToken
+
     try {
-        const foundUser = await User.findOneById( id )
-        if(!foundUser) throw { message: "User not found!" }
+        const foundUser = await User.findOne({ _id: decodedToken._id })
+        if(!foundUser) throw { message: "User not found" }
         const foundMovies = await Movie.find({ movieOwner: foundUser._id })
         res.status(200).json({ payload: foundMovies })
     }
     catch (err) {
         console.log(err)
-        res.status(500).json({ message: "error", error: err })
+        res.status(500).json({ message: "error", error: err.message })
     }
 }
 
 //  Get one movie
 const getOneMovie = async (req, res) => {
     const { id } = req.params
+
     try {
         let oneMovie = await Movie.findById(id).populate({path: "commentHistory", populate: {path: "commentOwner"}})
         if(!oneMovie) throw { message: "No movie with id found!" }
@@ -57,16 +61,17 @@ const getOneMovie = async (req, res) => {
     }
     catch (err) {
         console.log(err)
-        res.status(500).json({ message: "error", error: err })
+        res.status(500).json({ message: "error", error: err.message })
     }
 }
 
 // Update movie
 const updateMovie = async (req, res) => {
-    const { userId } = req.body
+    const decodedToken = res.locals.decodedToken
     const { id } = req.params
+
     try {
-        const foundUser =  await User.findOne({ userId })
+        const foundUser = await User.findOne({ _id: decodedToken._id })
         if(!foundUser) throw { message: "User not found" }
         const foundMovie = await Movie.findById(id)
         if(!foundMovie) throw { message: "Movie not found" }
@@ -81,16 +86,17 @@ const updateMovie = async (req, res) => {
     }
     catch (err) {
         console.log(err)
-        res.status(500).json({ message: "error", error: err })
+        res.status(500).json({ message: "error", error: err.message })
     }
 }
 
 //  Delete movie
 const deleteMovie = async (req, res) => {
+    const decodedToken = res.locals.decodedToken
     const { id } = req.params
-    const { email } = req.body
+
     try {
-        const foundUser =  await User.findOne({ email })
+        const foundUser = await User.findOne({ _id: decodedToken._id })
         if(!foundUser) throw { message: "User not found" }
         const foundMovie = await Movie.findById(id)
         if(!foundMovie) throw { message: "Movie not found" }
@@ -118,7 +124,7 @@ const deleteMovie = async (req, res) => {
     }
     catch (err) {
         console.log(err)
-        res.status(500).json({ message: "error", error: err })
+        res.status(500).json({ message: "error", error: err.message })
     }
 }
 

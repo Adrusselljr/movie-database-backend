@@ -1,11 +1,12 @@
-var express = require('express')
-var router = express.Router()
+const express = require('express')
+const router = express.Router()
 const { createMovie, getAllUsersMovies, getOneMovie, updateMovie, deleteMovie } = require('./controller/movieController')
+const { jwtMiddleware, checkIsEmpty } = require('../lib/index')
 
-router.post('/create-movie/:id', createMovie)
-router.get('/get-all-user-movies/:id', getAllUsersMovies)
+router.post('/create-movie', checkIsEmpty, jwtMiddleware, createMovie)
+router.get('/get-all-user-movies', jwtMiddleware, getAllUsersMovies)
 router.get('/get-one-movie/:id', getOneMovie)
-router.put('/update-movie/:id', updateMovie)
-router.delete('/delete-movie/:id', deleteMovie)
+router.put('/update-movie/:id', jwtMiddleware, checkIsEmpty, updateMovie)
+router.delete('/delete-movie/:id', jwtMiddleware, deleteMovie)
 
 module.exports = router
