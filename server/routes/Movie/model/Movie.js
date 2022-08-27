@@ -38,11 +38,6 @@ const MovieSchema = new mongoose.Schema({
         type: Number
     },
 
-    commentHistory: [{
-        type: mongoose.Schema.ObjectId,
-        ref: "comment"
-    }],
-
     movieOwner: {
         type: mongoose.Schema.ObjectId,
         ref: "user"

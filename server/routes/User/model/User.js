@@ -22,11 +22,6 @@ const UserSchema = new mongoose.Schema({
     movieHistory: [{
         type: mongoose.Schema.ObjectId,
         ref: "movie"
-    }],
-
-    commentHistory: [{
-        type: mongoose.Schema.ObjectId,
-        ref: "comment"
     }]
 
 }, { timestamps: true })

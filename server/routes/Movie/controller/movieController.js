@@ -1,6 +1,5 @@
 const Movie = require('../model/Movie')
 const User = require('../../User/model/User')
-const Comment = require('../../Comment/model/Comment')
 
 //  Create movie
 const createMovie = async (req, res) => {
@@ -104,16 +103,6 @@ const deleteMovie = async (req, res) => {
         if(foundUser._id.toString() === foundMovie.movieOwner.toString()) {
             const deleteMovie = await Movie.findByIdAndDelete(id)
             if(!deleteMovie) throw { mesaage: "No movie with id found!" }
-            if(foundMovie.commentHistory.length > 0) {
-                const foundComments = await Comment.find({ movie: id })
-                if(!foundComments) throw { mesaage: "No movie with id found!" }
-                await foundComments.map(async comment => {
-                    let commentUser = await User.findById(comment.commentOwner)
-                    await commentUser.commentHistory.pull(comment._id.toString())
-                    await commentUser.save()
-                })
-                await Comment.deleteMany({ movie: id })
-            }
             await foundUser.movieHistory.pull(id)
             await foundUser.save()
             res.status(200).json({ message: "Movie was deleted", deletedMovie: deleteMovie, deletedInUser: foundUser })
