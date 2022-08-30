@@ -34,7 +34,7 @@ const getAllUsers = async (req, res) => {
     }
     catch (err) {
         console.log(err)
-        res.status(500).json({ message: "error", error: err })
+        res.status(500).json({ message: "error", error: err.message })
     }
 }
 
@@ -49,7 +49,7 @@ const getCurrentUser = async (req, res) => {
     }
     catch (err) {
         console.log(err)
-        res.status(500).json({ message: "error", error: err })
+        res.status(500).json({ message: "error", error: err.message })
     }
 }
 
@@ -71,16 +71,15 @@ const updateUser = async (req, res) => {
 // Update user password
 const updatePassword = async (req, res) => {
     const decodedToken = res.locals.decodedToken
-    let { password } = req.body
 
     try {
         const salt = await bcrypt.genSalt(10)
-        const hashPassword = await bcrypt.hash(password, salt)
-        password = hashPassword
+        const hashPassword = await bcrypt.hash(req.body.password, salt)
+        req.body.password = hashPassword
 
-        const updateUser = await User.findOneAndUpdate({ _id: decodedToken._id }, req.body, { new: true })
-        if(updateUser === null) throw new Error("No user with id found!")
-        res.status(200).json({ message: "Updated user", payload: updateUser })
+        const updatedUser = await User.findOneAndUpdate({ _id: decodedToken._id }, req.body, { new: true })
+        if(updatedUser === null) throw new Error("No user with id found!")
+        res.status(200).json({ message: "Updated user", payload: updatedUser })
     }
     catch (err) {
         console.log(err)
