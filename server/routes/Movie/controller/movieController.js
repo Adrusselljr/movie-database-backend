@@ -54,7 +54,7 @@ const getOneMovie = async (req, res) => {
     const { id } = req.params
 
     try {
-        let oneMovie = await Movie.findById(id).populate({path: "commentHistory", populate: {path: "commentOwner"}})
+        let oneMovie = await Movie.findById(id)
         if(!oneMovie) throw { message: "No movie with id found!" }
         res.status(200).json({ payload: oneMovie })
     }
@@ -67,16 +67,16 @@ const getOneMovie = async (req, res) => {
 // Update movie
 const updateMovie = async (req, res) => {
     const decodedToken = res.locals.decodedToken
-    const { id } = req.params
+    const { _id } = req.params
 
     try {
         const foundUser = await User.findOne({ _id: decodedToken._id })
         if(!foundUser) throw { message: "User not found" }
-        const foundMovie = await Movie.findById(id)
+        const foundMovie = await Movie.findById(_id)
         if(!foundMovie) throw { message: "Movie not found" }
 
         if(foundUser._id.toString() === foundMovie.movieOwner.toString()) {
-            const updatedMovie = await Movie.findByIdAndUpdate({ id }, req.body, { new: true })
+            const updatedMovie = await Movie.findByIdAndUpdate({ _id }, req.body, { new: true })
             res.status(200).json({ message: "Movie has been updated", payload: updatedMovie })
         }
         else {
