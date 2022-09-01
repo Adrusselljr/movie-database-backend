@@ -101,11 +101,11 @@ const deleteMovie = async (req, res) => {
         if(!foundMovie) throw { message: "Movie not found" }
 
         if(foundUser._id.toString() === foundMovie.movieOwner.toString()) {
-            const deleteMovie = await Movie.findByIdAndDelete(id)
-            if(!deleteMovie) throw { mesaage: "No movie with id found!" }
+            const deletedMovie = await Movie.findByIdAndDelete(id)
+            if(!deletedMovie) throw { mesaage: "No movie with id found!" }
             await foundUser.movieHistory.pull(id)
             await foundUser.save()
-            res.status(200).json({ message: "Movie was deleted", deletedMovie: deleteMovie, deletedInUser: foundUser })
+            res.status(200).json({ message: "Movie was deleted", deletedMovie: deletedMovie, deletedInUser: foundUser })
         }
         else {
             throw { message: "You do not have permission!" }
